@@ -3,15 +3,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  const categoryFilter = document.getElementById("category-filter");
+  const sortFilter = document.getElementById("sort-filter");
+  const searchFilter = document.getElementById("search-filter");
 
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
-      const response = await fetch("/activities");
+      // Build query params from filters
+      const params = new URLSearchParams();
+      if (categoryFilter && categoryFilter.value) {
+        params.append("category", categoryFilter.value);
+      }
+      if (sortFilter && sortFilter.value) {
+        params.append("sort", sortFilter.value);
+      }
+      if (searchFilter && searchFilter.value) {
+        params.append("search", searchFilter.value);
+      }
+      const response = await fetch(`/activities?${params.toString()}`);
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear loading message and dropdown
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = "<option value=''>-- Select an activity --</option>";
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
@@ -40,6 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
+          <p><strong>Category:</strong> ${details.category}</p>
+          <p><strong>Date:</strong> ${details.date}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
           <div class="participants-container">
@@ -154,6 +171,11 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Toolbar event listeners
+  if (categoryFilter) categoryFilter.addEventListener("change", fetchActivities);
+  if (sortFilter) sortFilter.addEventListener("change", fetchActivities);
+  if (searchFilter) searchFilter.addEventListener("input", fetchActivities);
 
   // Initialize app
   fetchActivities();
